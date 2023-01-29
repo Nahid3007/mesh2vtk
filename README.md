@@ -1,7 +1,7 @@
 # Overview
 A python tool that converts a general purpose FE model to a VTK model for visualizing in ParaView.
 
-For now Nastran/OptiStruct `CQUAD4` and `CTRIA3` elements (.*bdf, *dat, *.fem) can be converted to a VTK model.
+For now Nastran/OptiStruct `CQUAD4` and `CTRIA3` elements (*.bdf, *.dat, *.fem) can be converted to a VTK model.
 
 # Usage
 
