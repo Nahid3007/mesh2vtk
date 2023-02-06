@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-import base64
+from base64 import b64encode
 import zlib
 from dataclasses import dataclass
 
@@ -18,7 +18,7 @@ class Element:
     vtk_elem_id: int
     attached_nodes: list[int]
 
-def parse_input(inputfile):
+def parse_nastran_input(inputfile):
 
     with open(inputfile) as f:
         lines = [line.strip() for line in f]
@@ -69,6 +69,36 @@ def parse_input(inputfile):
 
     return nodes, elements
 
+def compress_data_to_binary(arr_, d_type):
+    
+    arr = np.array(arr_, dtype=d_type)
+    
+    m = arr.nbytes//2**15 + 1
+    
+    compr_chunk = []
+    for i in range(m):
+        if i < m-1:
+            chunk = zlib.compress(arr[i*4096:(i+1)*4096])
+            compr_chunk.append(chunk)
+            # print(f'Chunk_{i}')
+        else:
+            size_last_chunk = arr[i*4096::].nbytes
+            chunk = zlib.compress(arr[i*4096::])
+            compr_chunk.append(chunk)
+            # print(f'Chunk_{i}')
+
+    head_arr = np.concatenate( ( [m, 2**15, size_last_chunk], [len(compr_chunk[i]) for i in range(len(compr_chunk))] ),dtype='i8')
+
+    b64_head_arr = b64encode(head_arr.tobytes())
+
+    sum = compr_chunk[0]
+    for i in range(1,len(compr_chunk)):
+        sum = sum + compr_chunk[i]
+
+    b64_arr = b64encode(sum)
+
+    return (b64_head_arr + b64_arr).decode('utf-8')
+   
 def writeVTKElements(nodes, elements, coding_type, outputfile):
     
     print(f'\nWriting VTK Elements ...')
@@ -99,10 +129,8 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
             for nid in nodes.keys():
                 arr_points.extend([nodes[nid].x, nodes[nid].y, nodes[nid].z])
 
-            arr = np.array(arr_points, dtype='float64')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
+            compr_data = compress_data_to_binary(arr_points, 'float64')
+            f.write(f"{compr_data}")
             
         elif coding_type == "ascii":
             for nid in nodes.keys():
@@ -126,15 +154,13 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
                 elif no_of_nid == 4:
                     for i in range(no_of_nid):
                         arr_connectivity.append(nodes[elements[eid].attached_nodes[i]].vtk_node_nid)
-                        arr = np.array(arr_points, dtype='float64')
+                        #arr = np.array(arr_connectivity, dtype='float64')
                 else:
                     print(f'Length of node unknown!')
                     exit
             
-            arr = np.array(arr_connectivity, dtype='int64')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
+            compr_data = compress_data_to_binary(arr_connectivity, 'int64')
+            f.write(f"{compr_data}")
     
         elif coding_type == "ascii":
             for eid in elements.keys():
@@ -158,11 +184,9 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
                 no_of_nid = len(elements[eid].attached_nodes)
                 offset += no_of_nid
                 arr_offset.append(offset)
-            
-            arr = np.array(arr_offset, dtype='int64')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
+
+            compr_data = compress_data_to_binary(arr_offset, 'int64')
+            f.write(f"{compr_data}")            
 
         elif coding_type == "ascii":
             offset = 0
@@ -178,14 +202,12 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
             for eid in elements.keys():
                 no_of_nid = len(elements[eid].attached_nodes)
                 if no_of_nid == 3:
-                    arr_types.append('5')
+                    arr_types.append(5)
                 else:
-                    arr_types.append('9')
-            
-            arr = np.array(arr_types, dtype='uint8')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
+                    arr_types.append(9)
+
+            compr_data = compress_data_to_binary(arr_types, 'uint8')
+            f.write(f"{compr_data}")
 
         elif coding_type == "ascii":
             for eid in elements.keys():
@@ -199,55 +221,74 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
         f.write(f'</Cells>\n')
         #*******************************************************************************
 
-        #********************************** Point Data **********************************
-        f.write(f'<PointData>\n')
+        # #********************************** Point Data **********************************
+        # f.write(f'<PointData>\n')
 
-        f.write(f'<Array type="Int32" Name="FEM_NODE_ID" format="{coding_type}">\n')
-        if coding_type == 'binary':
-            arr_nid_str = []
-            for nid in nodes.keys():
-                arr_nid_str.append(nodes[nid].fem_node_id)
+        # f.write(f'<Array type="Int32" Name="FEM_NODE_ID" format="{coding_type}">\n')
+        # if coding_type == 'binary':
+        #     arr_nid_str = []
+        #     for nid in nodes.keys():
+        #         arr_nid_str.append(nodes[nid].fem_node_id)
 
-            arr = np.array(arr_nid_str, dtype='int32')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
-            
+        #     compr_data = compress_data_to_binary(arr_nid_str, 'uint32')
+        #     f.write(f"{compr_data}")
 
-        elif coding_type == 'ascii':
-            for nid in nodes.keys():
-                f.write(f' {nodes[nid].fem_node_id}')
-        f.write(f'\n</Array>\n')
+        # elif coding_type == 'ascii':
+        #     for nid in nodes.keys():
+        #         f.write(f' {nodes[nid].fem_node_id}')
+        # f.write(f'\n</Array>\n')
         
-        f.write(f'</PointData>\n')
+        # f.write(f'</PointData>\n')
         #********************************************************************************
 
-        #********************************** Cell Data **********************************
-        f.write(f'<CellData>\n')
+        # #********************************** Cell Data **********************************
+        # f.write(f'<CellData>\n')
         
-        f.write(f'<Array type="Int32" Name="FEM_ELEMENT_ID" format="{coding_type}">\n')
-        if coding_type == "binary":
-            arr_eid_str = []
-            for eid in elements.keys():
-                arr_eid_str.append(elements[eid].fem_elem_id)
+        # f.write(f'<Array type="Int32" Name="FEM_ELEMENT_ID" format="{coding_type}">\n')
+        # if coding_type == "binary":
+        #     arr_eid_str = []
+        #     for eid in elements.keys():
+        #         arr_eid_str.append(elements[eid].fem_elem_id)
 
-            arr = np.array(arr_eid_str, dtype='int32')
-            arr_comp = zlib.compress(arr)
-            header = np.array([ 1, 2**15, arr.nbytes, len(arr_comp)], dtype='uint64')
-            f.write(f'{(base64.b64encode(header) + base64.b64encode(arr_comp)).decode("utf-8")}')
+        #     arr = np.array(arr_eid_str, dtype='int32')
+        #     m = arr.nbytes//2**15 + 1
 
-        elif coding_type == "ascii":
-            for eid in elements.keys():
-                f.write(f' {elements[eid].fem_elem_id}')
-        f.write(f'\n</Array>\n')
+        #     compr_chunk = []
+        #     for i in range(m):
+        #         if i < m-1:
+        #             chunk = zlib.compress(arr[i*4096:(i+1)*4096])
+        #             compr_chunk.append(chunk)
+        #             # print(f'Chunk_{i}')
+        #         else:
+        #             size_last_chunk = arr[i*4096::].nbytes
+        #             chunk = zlib.compress(arr[i*4096::])
+        #             compr_chunk.append(chunk)
+        #             # print(f'Chunk_{i}')
 
-        f.write(f'</CellData>\n')
-        #********************************************************************************
+        #     head_arr = np.concatenate( ( [m, 2**15, size_last_chunk], [len(compr_chunk[i]) for i in range(len(compr_chunk))] ),dtype='int64')
+
+        #     b64_head_arr = b64encode(head_arr.tobytes())
+
+        #     sum = compr_chunk[0]
+        #     for i in range(1,len(compr_chunk)):
+        #         sum = sum + compr_chunk[i]
+
+        #     b64_arr = b64encode(sum)
+        #     f.write(f"{(b64_head_arr + b64_arr).decode('utf-8')}")
+
+        # elif coding_type == "ascii":
+        #     for eid in elements.keys():
+        #         f.write(f' {elements[eid].fem_elem_id}')
+        # f.write(f'\n</Array>\n')
+
+        # f.write(f'</CellData>\n')
+        # #********************************************************************************
 
         f.write(f'</Piece>\n')
         f.write(f'</UnstructuredGrid>\n')
         f.write(f'</VTKFile>\n')
 
+        print(f' Done writing.')
         print(f' Number of Nodes: {no_of_nodes}')
         print(f' Number of Cells: {no_of_cells}')
         print(f' File written to "{outputfile}"')
@@ -262,14 +303,14 @@ if __name__ == '__main__':
 
     print(f'*****************************************************************************')
     print(f'*                                                                           *') 
-    print(f'*                            M E S H  2  V T K                              *')
+    print(f'*                            m e s h  2  v t k                              *')
     print(f'*                                                                           *')
     print(f'*****************************************************************************')
 
 
     print('')
     print(f'Parse input file "{inputfile}" ...')
-    nodes, elements = parse_input(inputfile)
+    nodes, elements = parse_nastran_input(inputfile)
 
     writeVTKElements(nodes, elements, coding_type, outputfile)
 
