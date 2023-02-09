@@ -1,9 +1,6 @@
 import numpy as np
-import sys
-import base64
-import zlib
 import argparse
-import os
+import base64, zlib
 from dataclasses import dataclass
 
 @dataclass
@@ -21,14 +18,14 @@ class Element:
     attached_nodes: list[int]
 
 def ParseArgs():
-    parser = argparse.ArgumentParser(description='=== Convert a FE mesh to vtk ===')
-    parser.add_argument("--inpath", help="Input path (relative, absolute) to input files directory.", required=True, type=str, action='store')
-    parser.add_argument("--outfile", help="Name of the output text file.", required=True, type=str, action='store')
-    parser.add_argument("--binary", help="base64 binary encoding. If 'False' ascii.", required=False, action='store_false', default=True)
+    parser = argparse.ArgumentParser(description='================== mesh2vtk - A FE mesh converter ==================')
+    parser.add_argument("--infile", help="Input FE NASTRAN/OptiStruct file.", required=True, type=str, action='store')
+    parser.add_argument("--outfile", help="Name of the converted vtu file.", required=True, type=str, action='store')
+    parser.add_argument("--ascii", help="If defined ascii representation. Default: binary.", required=False, action='store_true', default=False)
     args = parser.parse_args()
     
     return args
-    
+
 def parse_nastran_input(inputfile):
 
     with open(inputfile) as f:
@@ -80,12 +77,70 @@ def parse_nastran_input(inputfile):
 
     return nodes, elements
 
+def fem_nid_str(nodes):
+    arr_nid_str = []
+    for nid in nodes.keys():
+        arr_nid_str.append(nodes[nid].fem_node_id)
+        
+    return np.asarray(arr_nid_str, dtype=np.int64)
+
+def fem_eid_str(elements):
+    arr_eid_str = []
+    for eid in elements.keys():
+        arr_eid_str.append(elements[eid].fem_elem_id)
+
+    return np.asarray(arr_eid_str, dtype=np.int64)
+
+def points_str(nodes):
+    arr_points = []
+    for nid in nodes.keys():
+        arr_points.extend([nodes[nid].x, nodes[nid].y, nodes[nid].z])
+
+    return np.asarray(arr_points, dtype=np.float64)
+
+def cell_connectivity(elements, nodes):
+    arr_connectivity = []
+    for eid in elements.keys():
+        no_of_nid = len(elements[eid].attached_nodes)
+        if no_of_nid == 3:
+            for i in range(no_of_nid):
+                arr_connectivity.append(nodes[elements[eid].attached_nodes[i]].vtk_node_nid)
+        elif no_of_nid == 4:
+            for i in range(no_of_nid):
+                arr_connectivity.append(nodes[elements[eid].attached_nodes[i]].vtk_node_nid)
+        else:
+            print(f'Length of node unknown!')
+            exit
+            
+    return np.asarray(arr_connectivity, dtype=np.int64)
+
+def cell_offset(elements):
+    offset = 0
+    arr_offset = []
+    for eid in elements.keys():
+        no_of_nid = len(elements[eid].attached_nodes)
+        offset += no_of_nid
+        arr_offset.append(offset)
+
+    return np.asarray(arr_offset, dtype=np.int64)
+
+def cell_types(elements):
+    arr_types = []
+    for eid in elements.keys():
+        no_of_nid = len(elements[eid].attached_nodes)
+        if no_of_nid == 3:
+            arr_types.append(5)
+        else:
+            arr_types.append(9)
+
+    return np.asarray(arr_types, dtype=np.uint64)
+
 def compress_data_to_binary(arr):
 
-    m = arr.nbytes//2**15 + 1
+    m = arr.nbytes//2**15 + 1 # number of chunks
 
-    compr_chunk = []
-
+    # divide array in chunks and compress
+    compr_chunk = [] 
     for i in range(m):
         chunk = zlib.compress(arr[i*4096:(i+1)*4096],level=-1)
         compr_chunk.append(chunk)
@@ -106,14 +161,14 @@ def compress_data_to_binary(arr):
     b64_arr = base64.b64encode(sum)
 
     return (b64_head_arr + b64_arr).decode('utf-8')
-   
+
 def writeVTKElements(nodes, elements, coding_type, outputfile):
     
     print(f'\nWriting VTK Elements ...')
     
     with open(outputfile,'w') as f:
 
-        #************************** Write VTK Lines ********************************
+        #************************** VTK Header ********************************
         f.write(f'<?xml version="1.0"?>\n')
 
         if binary:
@@ -130,196 +185,134 @@ def writeVTKElements(nodes, elements, coding_type, outputfile):
 
         #********************************** Point Data **********************************
         f.write(f'      <PointData>\n')
-
         f.write(f'        <DataArray type="Int64" Name="FEM_NODE_ID" format="{coding_type}">\n')
         if binary:
-            arr_nid_str = []
-            for nid in nodes.keys():
-                arr_nid_str.append(nodes[nid].fem_node_id)
-
-            arr_nid_str = np.asarray(arr_nid_str, dtype=np.int64)
-
+            arr_nid_str = fem_nid_str(nodes)
             compr_data = compress_data_to_binary(arr_nid_str)
             f.write(f"          {compr_data}")
-
         else:
-            for nid in nodes.keys():
-                f.write(f' {nodes[nid].fem_node_id}')
+            arr_nid_str = fem_nid_str(nodes)
+            f.write(f"          ")
+            for i in arr_nid_str:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
-        
         f.write(f'      </PointData>\n')
         
         #********************************** Cell Data **********************************
         f.write(f'      <CellData>\n')
-        
         f.write(f'        <DataArray type="Int64" Name="FEM_ELEMENT_ID" format="{coding_type}">\n')
         if binary:
-            arr_eid_str = []
-            for eid in elements.keys():
-                arr_eid_str.append(elements[eid].fem_elem_id)
-
-            arr_eid_str = np.asarray(arr_eid_str, dtype=np.int64)
-
+            arr_eid_str = fem_eid_str(elements)
             compr_data = compress_data_to_binary(arr_eid_str)
             f.write(f"          {compr_data}")
-
         else:
-            for eid in elements.keys():
-                f.write(f' {elements[eid].fem_elem_id}')
+            arr_eid_str = fem_eid_str(elements)
+            f.write(f"          ")
+            for i in arr_eid_str:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
-
         f.write(f'      </CellData>\n')
         
         #********************************** Points *********************************
         f.write(f'      <Points>\n')
-
         f.write(f'        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="{coding_type}">\n')
         if binary:
-            arr_points = []
-            for nid in nodes.keys():
-                arr_points.extend([nodes[nid].x, nodes[nid].y, nodes[nid].z])
-
-            arr_points = np.asarray(arr_points, dtype=np.float64)
-
+            arr_points = points_str(nodes)
             compr_data = compress_data_to_binary(arr_points)
-            f.write(f"          {compr_data}")
-            
+            f.write(f"          {compr_data}")     
         else:
-            for nid in nodes.keys():
-                f.write(f' {nodes[nid].x} {nodes[nid].y} {nodes[nid].z}')
+            arr_points = points_str(nodes)
+            f.write(f"          ")
+            for i in arr_points:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
-
         f.write(f'      </Points>\n')
         
         #********************************** Cells **********************************
         f.write(f'      <Cells>\n')
-
         f.write(f'        <DataArray type="Int64" Name="connectivity" format="{coding_type}">\n')
         if binary:
-            arr_connectivity = []
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                if no_of_nid == 3:
-                    for i in range(no_of_nid):
-                        arr_connectivity.append(nodes[elements[eid].attached_nodes[i]].vtk_node_nid)
-                elif no_of_nid == 4:
-                    for i in range(no_of_nid):
-                        arr_connectivity.append(nodes[elements[eid].attached_nodes[i]].vtk_node_nid)
-                else:
-                    print(f'Length of node unknown!')
-                    exit
-            
-            arr_connectivity = np.asarray(arr_connectivity, dtype=np.int64)
-            
+            arr_connectivity = cell_connectivity(elements, nodes)
             compr_data = compress_data_to_binary(arr_connectivity)
             f.write(f"          {compr_data}")
-    
         else:
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                if no_of_nid == 3:
-                    for i in range(no_of_nid):
-                        f.write(f' {nodes[elements[eid].attached_nodes[i]].vtk_node_nid}')
-                elif no_of_nid == 4:
-                    for i in range(no_of_nid):
-                        f.write(f' {nodes[elements[eid].attached_nodes[i]].vtk_node_nid}')
-                else:
-                    print(f'Length of node unknown!')
-                    exit
+            arr_connectivity = cell_connectivity(elements, nodes)
+            f.write(f"          ")
+            for i in arr_connectivity:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
 
         f.write(f'        <DataArray type="Int64" Name="offsets" format="{coding_type}">\n')
         if binary:
-            offset = 0
-            arr_offset = []
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                offset += no_of_nid
-                arr_offset.append(offset)
-
-            arr_offset = np.asarray(arr_offset, dtype=np.int64)
-
+            arr_offset = cell_offset(elements)
             compr_data = compress_data_to_binary(arr_offset)
             f.write(f"          {compr_data}")            
-
         else:
-            offset = 0
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                offset += no_of_nid
-                f.write(f' {offset}')
+            arr_offset = cell_offset(elements)
+            f.write(f"          ")
+            for i in arr_offset:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
 
         f.write(f'        <DataArray type="UInt64" Name="types" format="{coding_type}">\n')
         if binary:
-            arr_types = []
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                if no_of_nid == 3:
-                    arr_types.append(5)
-                else:
-                    arr_types.append(9)
-
-            arr_types = np.asarray(arr_types, dtype=np.uint64)
-
+            arr_types = cell_types(elements)
             compr_data = compress_data_to_binary(arr_types)
             f.write(f"          {compr_data}")
-
         else:
-            for eid in elements.keys():
-                no_of_nid = len(elements[eid].attached_nodes)
-                if no_of_nid == 3:
-                    f.write(f' 5')
-                else:
-                    f.write(f' 9')
+            arr_types = cell_types(elements)
+            f.write(f"          ")
+            for i in arr_types:
+                f.write(f' {i}')
         f.write(f'\n        </DataArray>\n')
-
         f.write(f'      </Cells>\n')
  
-        # #*******************************************************************************
+        #*******************************************************************************
         f.write(f'    </Piece>\n')
         f.write(f'  </UnstructuredGrid>\n')
         f.write(f'</VTKFile>\n')
 
-        print(f' Number of Nodes: {no_of_nodes}')
-        print(f' Number of Cells: {no_of_cells}')
-        print(f' Done writing.')
+        print(f' Number of Points : {no_of_nodes}')
+        print(f' Number of Cells  : {no_of_cells}')
         print(f' ')
         print(f' File written to "{outputfile}"')
-
-#**********************************************************************************************
-
+   
 if __name__ == '__main__':
 
     args = ParseArgs()
 
-    inputfile = args.inpath
+    inputfile  = args.infile
     outputfile = args.outfile
-    binary = args.binary
+    ascii      = args.ascii
 
-    if binary:
+    if ascii == False:
         coding_type = 'binary'
+        binary = True
     else:
         coding_type = 'ascii'
-
-    print(f'')
-    print(f'*****************************************************************************')
-    print(f'*                                                                           *') 
-    print(f'*                            M e s h  2  V T K                              *')
-    print(f'*                                                                           *')
-    print(f'*****************************************************************************')
+        binary = False
+   
+    print(f'  __________________________________________________________________   ')
+    print(f'||                                                                  || ')
+    print(f'||               ___   ___          ___            _____            || ')
+    print(f'||      |\  /|  |     |     |  |       |   \    /    |    | /       || ')
+    print(f'||      | \/ |  |---  |--|  |--|   |---|    \  /     |    |/        || ')
+    print(f'||      |    |  |___  ___|  |  |   |___      \/      |    | \       || ')
+    print(f'||                                                                  || ')
+    print(f'||__________________________________________________________________|| ')
+    print(f'                                                                       ')
 
     print('')
     if '.bdf' or '.BDF' or '.dat' in inputfile:
-        print(f'Converting NASTRAN input deck')
+        print(f'Input deck type    : NASTRAN')
     else:
         print(f'Input deck not supported.')
 
-    print(f'Binary encoding = {binary}')
-
+    print(f'Binary compression : {binary}')
 
     print('')
     print(f'Parse input file "{inputfile}" ...')
+    
     nodes, elements = parse_nastran_input(inputfile)
 
     writeVTKElements(nodes, elements, coding_type, outputfile)
