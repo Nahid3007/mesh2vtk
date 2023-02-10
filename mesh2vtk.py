@@ -21,7 +21,7 @@ def ParseArgs():
     parser = argparse.ArgumentParser(description='================== mesh2vtk - A FE mesh converter ==================')
     parser.add_argument("--infile", help="Input FE NASTRAN/OptiStruct file.", required=True, type=str, action='store')
     parser.add_argument("--outfile", help="Name of the converted vtu file.", required=True, type=str, action='store')
-    parser.add_argument("--ascii", help="If defined ascii representation. Default: binary.", required=False, action='store_true', default=False)
+    parser.add_argument("--ASCII", help="If defined ascii representation. Default: binary.", required=False, action='store_true', default=False)
     args = parser.parse_args()
     
     return args
@@ -283,24 +283,24 @@ if __name__ == '__main__':
 
     inputfile  = args.infile
     outputfile = args.outfile
-    ascii      = args.ascii
+    ascii_      = args.ASCII
 
-    if ascii == False:
+    if ascii_ == False:
         coding_type = 'binary'
         binary = True
     else:
         coding_type = 'ascii'
         binary = False
    
-    print(f'  __________________________________________________________________   ')
-    print(f'||                                                                  || ')
-    print(f'||               ___   ___          ___            _____            || ')
-    print(f'||      |\  /|  |     |     |  |       |   \    /    |    | /       || ')
-    print(f'||      | \/ |  |---  |--|  |--|   |---|    \  /     |    |/        || ')
-    print(f'||      |    |  |___  ___|  |  |   |___      \/      |    | \       || ')
-    print(f'||                                                                  || ')
-    print(f'||__________________________________________________________________|| ')
-    print(f'                                                                       ')
+    print(f'') 
+    print(f'==================================================')  
+    print(f'                     _     ____        _   _      ')
+    print(f' _ __ ___   ___  ___| |__ |___ \__   _| |_| | __  ')
+    print(f"| '_ ` _ \ / _ \/ __| '_ \  __) \ \ / / __| |/ /  ")
+    print(f'| | | | | |  __/\__ \ | | |/ __/ \ V /| |_|   <   ')
+    print(f'|_| |_| |_|\___||___/_| |_|_____| \_/  \__|_|\_\  ')
+    print(f'')                                                            
+    print(f'==================================================') 
 
     print('')
     if '.bdf' or '.BDF' or '.dat' in inputfile:
