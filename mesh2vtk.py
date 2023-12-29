@@ -30,12 +30,14 @@ class ShellProperty:
         self.thickness = thickness
 
 
-def string2float(string):
+def string2float(string) -> float:
     if "-" in string[1:]:
         return float(string[0] + string[1:].replace("-", "e-"))
     elif "+" in string[1:]:
         return float(string[0] + string[1:].replace("+", "e+"))
     else:
+        if not string:
+            return 0.
         return float(string)
 
 
@@ -57,6 +59,8 @@ def ParseArgs():
 
 
 def nastran_parser(inputfile):
+
+    # Read entire input file and save to a list
     with open(inputfile) as f:
         lines = [line.strip() for line in f]
 
@@ -68,22 +72,12 @@ def nastran_parser(inputfile):
     elements = {}
     pshell = {}
     shell_property = {}
+    coordinate_system = {}
 
-    # Parse PSHELL properties
+    # Parse nodes
     for line in lines:
         line = line.strip()
 
-        if line.lower().startswith('pshell'):
-            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-            pid = split_strings[1]
-            thickness = split_strings[3]
-
-            pshell[pid] = thickness
-
-    for line in lines:
-        line = line.strip()
-
-        # Parse nodes
         if line.lower().startswith('grid'):
             split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
 
@@ -99,7 +93,42 @@ def nastran_parser(inputfile):
 
             vtk_nid = vtk_nid + 1
 
-        # Parse elements
+    # Parse coordinate systems
+    for line in lines:
+        line = line.strip()
+
+        if line.startswith('CORD2C'):
+            line_index = lines.index(line)
+            first_line = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
+            second_line = [lines[line_index + 1][i:i + 8].strip() for i in range(0, len(lines[line_index + 1]), 8)]
+            systemId = first_line[1]
+
+            coord_point_A = np.asarray([string2float(first_line[3]), string2float(first_line[4]), string2float(first_line[5])])
+            coord_point_B = np.asarray([string2float(first_line[6]), string2float(first_line[7]), string2float(first_line[8])])
+            if len(second_line) < 3:
+                coord_point_C = np.asarray([string2float(second_line[1]), 0., 0.])
+            elif len(second_line) < 4:
+                coord_point_C = np.asarray([string2float(second_line[1]), string2float(second_line[2]), 0.])
+            else:
+                coord_point_C = np.asarray([string2float(second_line[1]), string2float(second_line[2]), string2float(second_line[3])])
+
+            coordinate_system[systemId] = [coord_point_A, coord_point_B, coord_point_C]
+
+    # Parse PSHELL properties
+    for line in lines:
+        line = line.strip()
+
+        if line.lower().startswith('pshell'):
+            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
+            pid = split_strings[1]
+            thickness = split_strings[3]
+
+            pshell[pid] = thickness
+
+    # Parse elements
+    for line in lines:
+        line = line.strip()
+
         elem_type = None
 
         if (line.lower().startswith('cquad4') or line.lower().startswith('ctria3') or
@@ -150,7 +179,7 @@ def nastran_parser(inputfile):
 
             vtk_eid = vtk_eid + 1
 
-    return nodes, elements, elem_type_list, pshell, shell_property
+    return nodes, elements, elem_type_list, pshell, shell_property, coordinate_system
 
 
 def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_node_string, fem_element_string):
@@ -309,7 +338,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    nodes, elements, elem_type_list, pshell, shell_property = nastran_parser(inputfile)
+    nodes, elements, elem_type_list, pshell, shell_property, coordinate_system = nastran_parser(inputfile)
 
     # print(elem_type_list)
 
@@ -318,9 +347,12 @@ if __name__ == '__main__':
 
     # for eid in elements.keys():
     #     print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
-
+    #
     # for eid in shell_property.keys():
     #     print(shell_property[eid].eid, shell_property[eid].thickness)
+
+    # for sid in coordinate_system.keys():
+    #     print(f'System id {sid}: {coordinate_system[sid]}')
 
     write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_node_string, fem_element_string)
 
