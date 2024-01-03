@@ -74,30 +74,12 @@ def nastran_parser(inputfile):
     shell_property = {}
     coordinate_system = {}
 
-    # Parse nodes
-    for line in lines:
-        line = line.strip()
-
-        if line.lower().startswith('grid'):
-            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-
-            fem_nid = int(split_strings[1])
-
-            x = string2float(split_strings[3])
-            y = string2float(split_strings[4])
-            z = string2float(split_strings[5])
-
-            nodes[fem_nid] = Node(fem_nid, vtk_nid)
-
-            nodes[fem_nid].coordinates = np.array([x, y, z], dtype=np.float32)
-
-            vtk_nid = vtk_nid + 1
-
     # Parse coordinate systems
     for line in lines:
         line = line.strip()
 
         if line.startswith('CORD2C'):
+            coord_type = 'CORD2C'
             line_index = lines.index(line)
             first_line = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
             second_line = [lines[line_index + 1][i:i + 8].strip() for i in range(0, len(lines[line_index + 1]), 8)]
@@ -112,7 +94,51 @@ def nastran_parser(inputfile):
             else:
                 coord_point_C = np.asarray([string2float(second_line[1]), string2float(second_line[2]), string2float(second_line[3])])
 
-            coordinate_system[systemId] = [coord_point_A, coord_point_B, coord_point_C]
+            coordinate_system[systemId] = [coord_type, coord_point_A, coord_point_B, coord_point_C]
+            
+    if not coordinate_system:
+        pass
+    else:
+        print(f'Local coordinate system found:')
+        print(f'   Type     Id')
+        for key, value in coordinate_system.items():
+            print(f'   {value[0]}   {key}')
+
+    grid_count = 0
+
+    # Parse nodes
+    for line in lines:
+        line = line.strip()
+
+        if line.lower().startswith('grid'):
+            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
+
+            fem_nid = int(split_strings[1])
+
+            if split_strings[2] in coordinate_system.keys():
+                system_id = split_strings[2]
+                coord_point_A = coordinate_system[systemId][1]
+                R = string2float(split_strings[3])
+                Phi_deg = string2float(split_strings[4])
+                Phi_rad = (np.pi*Phi_deg)/180
+
+                x = coord_point_A[0] + R*np.cos(Phi_rad)
+                y = coord_point_A[1] + R*np.sin(Phi_rad)
+                z = coord_point_A[2] + string2float(split_strings[5])
+
+                grid_count += 1
+            else:
+                x = string2float(split_strings[3])
+                y = string2float(split_strings[4])
+                z = string2float(split_strings[5])
+
+            nodes[fem_nid] = Node(fem_nid, vtk_nid)
+
+            nodes[fem_nid].coordinates = np.array([x, y, z], dtype=np.float32)
+
+            vtk_nid = vtk_nid + 1
+
+    print(f'   {grid_count} points transformed to global coordinates')
 
     # Parse PSHELL properties
     for line in lines:
@@ -297,6 +323,7 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
         writer.SetDataModeToAscii()
     writer.Write()
 
+    print(f'')
     print(f'VTK Summary:')
     print(f'   Number of Points: {vtk_points.GetNumberOfPoints()}')
     print(f'   Number of Cells : {vtk_cells.GetNumberOfCells()}')
