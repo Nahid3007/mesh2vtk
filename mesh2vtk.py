@@ -118,13 +118,15 @@ def nastran_parser(inputfile):
             if split_strings[2] in coordinate_system.keys():
                 system_id = split_strings[2]
                 coord_point_A = coordinate_system[systemId][1]
+
                 R = string2float(split_strings[3])
                 Phi_deg = string2float(split_strings[4])
                 Phi_rad = (np.pi*Phi_deg)/180
+                Z = string2float(split_strings[5])
 
-                x = coord_point_A[0] + R*np.cos(Phi_rad)
-                y = coord_point_A[1] + R*np.sin(Phi_rad)
-                z = coord_point_A[2] + string2float(split_strings[5])
+                x = coord_point_A[0] + R * np.cos(Phi_rad)
+                y = coord_point_A[1] + R * np.sin(Phi_rad)
+                z = coord_point_A[2] + Z
 
                 grid_count += 1
             else:
@@ -138,7 +140,10 @@ def nastran_parser(inputfile):
 
             vtk_nid = vtk_nid + 1
 
-    print(f'   {grid_count} points transformed to global coordinates')
+    if not coordinate_system:
+        pass
+    else:
+        print(f'   {grid_count} points transformed to global coordinates')
 
     # Parse PSHELL properties
     for line in lines:
@@ -159,7 +164,7 @@ def nastran_parser(inputfile):
 
         if (line.lower().startswith('cquad4') or line.lower().startswith('ctria3') or
                 line.lower().startswith('chexa') or line.lower().startswith('cpenta') or
-                line.lower().startswith('ctetra')):
+                line.lower().startswith('ctetra') or line.lower().startswith('cbar')):
 
             if line.lower().startswith('cquad4'):
                 elem_type = 'CQUAD4'
@@ -171,6 +176,8 @@ def nastran_parser(inputfile):
                 elem_type = 'CPENTA'
             elif line.lower().startswith('ctetra'):
                 elem_type = 'CTETRA'
+            elif line.lower().startswith('cbar'):
+                elem_type = 'CBAR'    
 
             if elem_type not in elem_type_list:
                 elem_type_list.append(elem_type)
@@ -193,13 +200,29 @@ def nastran_parser(inputfile):
 
             if elem_type == 'CQUAD4' or elem_type == 'CTRIA3':
                 shell_property[vtk_eid] = ShellProperty(vtk_eid, float(pshell[elem_pid]))
-            elif elem_type == 'CHEXA' or elem_type == 'CPENTA' or elem_type == 'CTETRA':
+            elif elem_type == 'CHEXA' or elem_type == 'CPENTA' or elem_type == 'CTETRA' or elem_type == 'CBAR':
                 shell_property[vtk_eid] = ShellProperty(vtk_eid, np.nan)
 
             nodes_list = []
             for i in [x for x in range(len(split_strings) - 3)]:
-                fem_nid = int(split_strings[3 + i])
-                nodes_list.append(nodes[fem_nid].vtk_nid)
+                if elem_type == "CQUAD4":
+                    if i == 4: # no Material orientation and ZOFFS considered for shell element
+                        break
+                    fem_nid = int(split_strings[3 + i])
+                    nodes_list.append(nodes[fem_nid].vtk_nid)
+                elif elem_type == "CTRIA3":
+                    if i == 3: # no Material orientation and ZOFFS considered for shell element
+                        break
+                    fem_nid = int(split_strings[3 + i])
+                    nodes_list.append(nodes[fem_nid].vtk_nid)
+                elif elem_type == "CBAR":
+                    if i == 2: # ...
+                        break
+                    fem_nid = int(split_strings[3 + i])
+                    nodes_list.append(nodes[fem_nid].vtk_nid)
+                else:
+                    fem_nid = int(split_strings[3 + i])
+                    nodes_list.append(nodes[fem_nid].vtk_nid)
 
             elements[fem_eid].attached_nodes = np.asarray(nodes_list)
 
@@ -222,6 +245,7 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
     vtk_cells = vtk.vtkCellArray()
 
     vtk_cell_type = {
+        "line": 3,
         "quad": 9,
         "tria": 6,
         "hexa": 12,
@@ -271,6 +295,14 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
                 tetra10.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
             vtk_cells.InsertNextCell(tetra10)
             vtk_cell_type_no.append(vtk_cell_type["tetra10"])
+            
+        # Bar/Beam elements
+        elif len(elements[eid].attached_nodes) == 2 and 'CBAR' in elem_type_list:
+            line = vtk.vtkLine()
+            for i in range(len(elements[eid].attached_nodes)):
+                line.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
+            vtk_cells.InsertNextCell(line)
+            vtk_cell_type_no.append(vtk_cell_type["line"])
 
     # Create unstructured grid
     ugrid = vtk.vtkUnstructuredGrid()
@@ -370,11 +402,11 @@ if __name__ == '__main__':
     # print(elem_type_list)
 
     # for nid in nodes.keys():
-    #     print(nodes[nid].nid, nodes[nid].vtk_nid, nodes[nid].coordinates)
+        # print(nodes[nid].nid, nodes[nid].vtk_nid, nodes[nid].coordinates)
 
     # for eid in elements.keys():
-    #     print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
-    #
+        # print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
+    
     # for eid in shell_property.keys():
     #     print(shell_property[eid].eid, shell_property[eid].thickness)
 
