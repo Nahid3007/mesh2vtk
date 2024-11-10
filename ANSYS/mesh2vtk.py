@@ -1,6 +1,6 @@
 '''
 
-mesh2vtk: Converts a Nastran/OptiStruct Finite Element Model into a vtu file
+mesh2vtk: Converts an ANSYS Finite Element Model into a vtu file
 
 '''
 
@@ -24,23 +24,6 @@ class Element:
         self.attached_nodes = []
 
 
-class ShellProperty:
-    def __init__(self, eid: int, thickness):
-        self.eid = eid
-        self.thickness = thickness
-
-
-def string2float(string) -> float:
-    if "-" in string[1:]:
-        return float(string[0] + string[1:].replace("-", "e-"))
-    elif "+" in string[1:]:
-        return float(string[0] + string[1:].replace("+", "e+"))
-    else:
-        if not string:
-            return 0.
-        return float(string)
-
-
 def ParseArgs():
     parser = argparse.ArgumentParser(description='A python tool that converts a (general purpose) Finite Element '
                                                  'Model to a VTK model')
@@ -58,11 +41,11 @@ def ParseArgs():
     return args
 
 
-def nastran_parser(inputfile):
+def parse_ansys_file(inputfile):
 
     # Read entire input file and save to a list
     with open(inputfile) as f:
-        lines = [line.strip() for line in f]
+        lines = [line.rstrip() for line in f]
 
     elem_type_list = []
     vtk_nid = 0
@@ -70,166 +53,73 @@ def nastran_parser(inputfile):
 
     nodes = {}
     elements = {}
-    pshell = {}
-    shell_property = {}
-    coordinate_system = {}
-
-    # Parse coordinate systems
-    for line in lines:
-        line = line.strip()
-
-        if line.startswith('CORD2C'):
-            coord_type = 'CORD2C'
-            line_index = lines.index(line)
-            first_line = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-            second_line = [lines[line_index + 1][i:i + 8].strip() for i in range(0, len(lines[line_index + 1]), 8)]
-            systemId = first_line[1]
-
-            coord_point_A = np.asarray([string2float(first_line[3]), string2float(first_line[4]), string2float(first_line[5])])
-            coord_point_B = np.asarray([string2float(first_line[6]), string2float(first_line[7]), string2float(first_line[8])])
-            if len(second_line) < 3:
-                coord_point_C = np.asarray([string2float(second_line[1]), 0., 0.])
-            elif len(second_line) < 4:
-                coord_point_C = np.asarray([string2float(second_line[1]), string2float(second_line[2]), 0.])
-            else:
-                coord_point_C = np.asarray([string2float(second_line[1]), string2float(second_line[2]), string2float(second_line[3])])
-
-            coordinate_system[systemId] = [coord_type, coord_point_A, coord_point_B, coord_point_C]
-            
-    if not coordinate_system:
-        pass
-    else:
-        print(f'Local coordinate system found:')
-        print(f'   Type     Id')
-        for key, value in coordinate_system.items():
-            print(f'   {value[0]}   {key}')
 
     grid_count = 0
 
-    # Parse nodes
+    bNodes = False
+    bElems = False
+
+    temp = []
+    elems_line_187 = []
+    elem_type_list = []
+    
     for line in lines:
-        line = line.strip()
+        
+        # parse nodes
+        if line.strip().lower().startswith('nblock'):
+            bNodes = True
+        elif bNodes and not line.startswith('-1'):
+            if line.strip().startswith('('):
+                continue
+            
+            fem_nid = line[0:9].strip()
+            grid_count += 1
 
-        if line.lower().startswith('grid'):
-            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-
-            fem_nid = int(split_strings[1])
-
-            if split_strings[2] in coordinate_system.keys():
-                system_id = split_strings[2]
-                coord_point_A = coordinate_system[systemId][1]
-
-                R = string2float(split_strings[3])
-                Phi_deg = string2float(split_strings[4])
-                Phi_rad = (np.pi*Phi_deg)/180
-                Z = string2float(split_strings[5])
-
-                x = coord_point_A[0] + R * np.cos(Phi_rad)
-                y = coord_point_A[1] + R * np.sin(Phi_rad)
-                z = coord_point_A[2] + Z
-
-                grid_count += 1
-            else:
-                x = string2float(split_strings[3])
-                y = string2float(split_strings[4])
-                z = string2float(split_strings[5])
+            x_coord = line[10:30].strip()
+            y_coord = line[30:50].strip()
+            z_coord = line[50:70].strip()
 
             nodes[fem_nid] = Node(fem_nid, vtk_nid)
-
-            nodes[fem_nid].coordinates = np.array([x, y, z], dtype=np.float32)
+            nodes[fem_nid].coordinates = np.array([x_coord, y_coord, z_coord], dtype=np.float32)
 
             vtk_nid = vtk_nid + 1
+    
+        # parse elements
+        elif line.strip().lower().startswith('et,'): 
+            etype_no = line.split(',')[2]
+            elem_type_list.append(etype_no)
 
-    if not coordinate_system:
-        pass
-    else:
-        print(f'   {grid_count} points transformed to global coordinates')
+            bNodes = False
+            bElems = True
 
-    # Parse PSHELL properties
-    for line in lines:
-        line = line.strip()
+        elif bElems and not line.startswith('-1'):
+            if line.strip().startswith('(') or line.strip().startswith('eblock'):
+                continue
+            
+            if etype_no == '187': # 10 node solid element
+                elems_line_187.append(line)
+                
+        else:
+            bNodes = False
+            bElems = False
+    
 
-        if line.lower().startswith('pshell'):
-            split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-            pid = split_strings[1]
-            thickness = split_strings[3]
+    if '187' in elem_type_list:
+        for i in range(len(elems_line_187)):
+            if i % 2 == 0: 
+                fem_eid = elems_line_187[i][91:99].strip()
 
-            pshell[pid] = thickness
+                elements[fem_eid] = Element(fem_eid, vtk_eid)
 
-    # Parse elements
-    for line in lines:
-        line = line.strip()
+                attached_nodes_1st_line = [nodes[str(int(elems_line_187[i][99:173][j:j+9]))].vtk_nid for j in range(0, len(elems_line_187[i][99:173]), 9)]
+                attached_nodes_2nd_line = [nodes[str(int(elems_line_187[i+1][0:18][j:j+9]))].vtk_nid for j in range(0, len(elems_line_187[i+1][0:18]), 9)]
+                
+                # temp.append(attached_nodes_2nd_line)
+                elements[fem_eid].attached_nodes = attached_nodes_1st_line + attached_nodes_2nd_line
 
-        elem_type = None
+                vtk_eid = vtk_eid + 1
 
-        if (line.lower().startswith('cquad4') or line.lower().startswith('ctria3') or
-                line.lower().startswith('chexa') or line.lower().startswith('cpenta') or
-                line.lower().startswith('ctetra') or line.lower().startswith('cbar')):
-
-            if line.lower().startswith('cquad4'):
-                elem_type = 'CQUAD4'
-            elif line.lower().startswith('ctria3'):
-                elem_type = 'CTRIA3'
-            elif line.lower().startswith('chexa'):
-                elem_type = 'CHEXA'
-            elif line.lower().startswith('cpenta'):
-                elem_type = 'CPENTA'
-            elif line.lower().startswith('ctetra'):
-                elem_type = 'CTETRA'
-            elif line.lower().startswith('cbar'):
-                elem_type = 'CBAR'    
-
-            if elem_type not in elem_type_list:
-                elem_type_list.append(elem_type)
-
-            if elem_type == 'CHEXA' or elem_type == 'CTETRA':
-                line_index = lines.index(line)
-                hex_tet_line = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-                if len(hex_tet_line) == 10:
-                    hex_tet_line.pop(-1)
-                hex_tet_cont_line = [lines[line_index + 1][i:i + 8].strip() for i in range(0, len(lines[line_index + 1]), 8)]
-                hex_tet_cont_line.pop(0)
-                split_strings = hex_tet_line + hex_tet_cont_line
-            else:
-                split_strings = [line[i:i + 8].strip() for i in range(0, len(line), 8)]
-
-            fem_eid = int(split_strings[1])
-            elem_pid = split_strings[2]
-
-            elements[fem_eid] = Element(fem_eid, vtk_eid)
-
-            if elem_type == 'CQUAD4' or elem_type == 'CTRIA3':
-                shell_property[vtk_eid] = ShellProperty(vtk_eid, float(pshell[elem_pid]))
-            elif elem_type == 'CHEXA' or elem_type == 'CPENTA' or elem_type == 'CTETRA' or elem_type == 'CBAR':
-                shell_property[vtk_eid] = ShellProperty(vtk_eid, np.nan)
-
-            nodes_list = []
-            for i in [x for x in range(len(split_strings) - 3)]:
-                if elem_type == "CQUAD4":
-                    if i == 4: # no Material orientation and ZOFFS considered for shell element
-                        break
-                    fem_nid = int(split_strings[3 + i])
-                    nodes_list.append(nodes[fem_nid].vtk_nid)
-                elif elem_type == "CTRIA3":
-                    if i == 3: # no Material orientation and ZOFFS considered for shell element
-                        break
-                    fem_nid = int(split_strings[3 + i])
-                    nodes_list.append(nodes[fem_nid].vtk_nid)
-                elif elem_type == "CBAR":
-                    if i == 2: # ...
-                        break
-                    fem_nid = int(split_strings[3 + i])
-                    nodes_list.append(nodes[fem_nid].vtk_nid)
-                else:
-                    fem_nid = int(split_strings[3 + i])
-                    nodes_list.append(nodes[fem_nid].vtk_nid)
-
-            elements[fem_eid].attached_nodes = np.asarray(nodes_list)
-
-            vtk_eid = vtk_eid + 1
-
-    return nodes, elements, elem_type_list, pshell, shell_property, coordinate_system
-
+    return nodes, elements, elem_type_list, temp
 
 def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_node_string, fem_element_string):
     # Define VTK Points
@@ -289,7 +179,7 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
             vtk_cell_type_no.append(vtk_cell_type["wedge"])
 
         # Tetrahedra (2nd order) elements
-        elif len(elements[eid].attached_nodes) == 10 and 'CTETRA' in elem_type_list:
+        elif len(elements[eid].attached_nodes) == 10 and '187' in elem_type_list:
             tetra10 = vtk.vtkQuadraticTetra()
             for i in range(len(elements[eid].attached_nodes)):
                 tetra10.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
@@ -309,29 +199,13 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
     ugrid.SetPoints(vtk_points)
     ugrid.SetCells(vtk_cell_type_no, vtk_cells)
 
-    # Add thickness values (CellData)
-    element_thickness = vtk.vtkTypeFloat32Array()
-    element_thickness.SetNumberOfComponents(1)
-    element_thickness.SetName("SHELL_THICKNESS")
-
-    if "CQUAD4" in elem_type_list or "CTRIA3" in elem_type_list:
-        for eid in elements.keys():
-            # Quad elements
-            if len(elements[eid].attached_nodes) == 4 and 'CQUAD4' in elem_type_list:
-                element_thickness.InsertNextValue(shell_property[elements[eid].vtk_eid].thickness)
-            elif len(elements[eid].attached_nodes) == 3 and 'CTRIA3' in elem_type_list:
-                element_thickness.InsertNextValue(shell_property[elements[eid].vtk_eid].thickness)
-            else:
-                element_thickness.InsertNextValue(shell_property[elements[eid].vtk_eid].thickness)
-        ugrid.GetCellData().AddArray(element_thickness)
-
     # Mapping of FEM node and element ids to vtu model
     if fem_node_string:
         fem_node_id = vtk.vtkIntArray()
         fem_node_id.SetNumberOfComponents(1)
         fem_node_id.SetName("FEM_NODE_ID")
         for nid in nodes.keys():
-            fem_node_id.InsertNextValue(nodes[nid].nid)
+            fem_node_id.InsertNextValue(int(nodes[nid].nid))
         # Add the point data to the VTK unstructured dataset
         ugrid.GetPointData().AddArray(fem_node_id)
 
@@ -340,7 +214,7 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
         fem_element_id.SetNumberOfComponents(1)
         fem_element_id.SetName("FEM_ELEMENT_ID")
         for eid in elements.keys():
-            fem_element_id.InsertNextValue(elements[eid].eid)
+            fem_element_id.InsertNextValue(int(elements[eid].eid))
         # Add the cell data to the VTK unstructured dataset
         ugrid.GetCellData().AddArray(fem_element_id)
 
@@ -362,16 +236,8 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
     print(f'   Writing output file: {outputfile}')
 
 
+
 if __name__ == '__main__':
-    print(f'')
-    print(f'==================================================')
-    print(f'                     _     ____        _   _      ')
-    print(f' _ __ ___   ___  ___| |__ |___ \__   _| |_| | __  ')
-    print(f"| '_ ` _ \ / _ \/ __| '_ \  __) \ \ / / __| |/ /  ")
-    print(f'| | | | | |  __/\__ \ | | |/ __/ \ V /| |_|   <   ')
-    print(f'|_| |_| |_|\___||___/_| |_|_____| \_/  \__|_|\_\  ')
-    print(f'')
-    print(f'==================================================')
 
     args = ParseArgs()
 
@@ -383,35 +249,17 @@ if __name__ == '__main__':
 
     print(f'')
 
-    solver = None
-    if 'fem' in inputfile.lower():
-        solver = 'OptiStruct'
-    elif 'bdf' in inputfile.lower() or 'dat' in inputfile.lower():
-        solver = 'Nastran'
-    elif 'inp' in inputfile.lower():
-        solver = 'Abaqus'
-
-    print(f'Parsing {solver} input file: {inputfile}')
-    print(f'Binary vtu file data mode: {not dataModeASCII} ')
-    print(f'')
-
     start_time = time.time()
 
-    nodes, elements, elem_type_list, pshell, shell_property, coordinate_system = nastran_parser(inputfile)
+    nodes, elements, elem_type_list, temp = parse_ansys_file(inputfile)
 
-    # print(elem_type_list)
+    #for nid in nodes.keys():
+    #    print(nodes[nid].nid, nodes[nid].vtk_nid, nodes[nid].coordinates)
 
-    # for nid in nodes.keys():
-        # print(nodes[nid].nid, nodes[nid].vtk_nid, nodes[nid].coordinates)
+    #for eid in elements.keys():
+    #    print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
 
-    # for eid in elements.keys():
-        # print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
-    
-    # for eid in shell_property.keys():
-    #     print(shell_property[eid].eid, shell_property[eid].thickness)
-
-    # for sid in coordinate_system.keys():
-    #     print(f'System id {sid}: {coordinate_system[sid]}')
+    # print(temp)
 
     write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_node_string, fem_element_string)
 
