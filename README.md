@@ -1,58 +1,32 @@
-# Overview (still in development 🚧)
-A python tool that converts a (general purpose) Finite Element Model to a VTK model for visualizing in ParaView.
+# **mesh2vtk: ANSYS FEM to VTK Converter (still in development 🚧)**
 
-Currently I will try to focus on converting ANSYS FE models and post-processing some results.
+`mesh2vtk` is a Python script that converts ANSYS Finite Element Model (FEM) files into VTK Unstructured Grid (`.vtu`) files. This tool is designed for visualizing and analyzing FEM data in tools like ParaView.
 
+---
 
-But still - as already started - the focus will be in the future to also convert:
-- Nastran (.bdf, .dat) / OptiStruct (.fem) containing `CQUAD4`,`CTRIA3`, `CHEXA`, `CPENTA` and `CTETRA (2nd order only)` elements
-- Abaqus 
+## **Features**
+- Converts FEM nodes and elements to VTK-compatible formats.
+- Supports the following ANSYS element types:
+  - **ET,185: 8-node hexahedral, 6-node prism, 5-node pyramid, 4-node tetrahedral element**.
+  - **ET,186: 20-node hexahedral**.
+  - **ET,187: 10-node tetrahedral element**.
+- Maps FEM node and element IDs to the `.vtu` file (optional).
+- Outputs in binary or ASCII format.
 
-# Usage
+---
 
-```
-==================================================
-                     _     ____        _   _      
- _ __ ___   ___  ___| |__ |___ \__   _| |_| | __  
-| '_ ` _ \ / _ \/ __| '_ \  __) \ \ / / __| |/ /  
-| | | | | |  __/\__ \ | | |/ __/ \ V /| |_|   <   
-|_| |_| |_|\___||___/_| |_|_____| \_/  \__|_|\_\  
+## **Installation**
 
-==================================================
-usage: mesh2vtk.py [-h] --inputfile INPUTFILE --outputfile OUTPUTFILE [--ascii] [--fem_node_string]
-                   [--fem_element_string]
+### **Requirements**
+- Python 3.8 or higher
+- Python libraries:
+  - `vtk`
+  - `numpy`
 
-A python tool that converts a (general purpose) Finite Element Model to a VTK model
+Install the required libraries using:
 
-options:
-  -h, --help            show this help message and exit
-  --inputfile INPUTFILE
-                        Path to the input file.
-  --outputfile OUTPUTFILE
-                        Path to the output vtu file.
-  --ascii               Optional: Data mode of vtu file. BINARY set as default mode. If this argument is passed
-                        data mode will be set to ASCII.
-  --fem_node_string     Optional: Map FEM node id to vtu file.
-  --fem_element_string  Optional: Map FEM element id to vtu file.
-```
-
-# Example of converted Finite Element Models to vtu
-
-A simple test model - here a Nastran FE model - was converted to a `vtu` model. 
-
-The figure below shows the original Nastran model showing the node and element IDs.
-
-![original_nastran_model](./figures/nastran_orginal.png "nastran original model")
-
-Converted Nastran FEM to vtu **without** FEM node and element string mapping.
-
-![vtu_no_fem_mapping](./figures/test_model_vtu_no_fem_entity_mapping.png "vtu without fem mapping")
-
-Converted Nastran FEM to vtu **with** FEM node and element string mapping (if `--fem_node_string` and/or `--fem_element_string` is passed to the CLI). 
-
-![vtu_with_fem_mapping](./figures/test_model_vtu_with_fem_entity_mapping.png "vtu with fem mapping")
-
-
+```bash
+pip install vtk numpy
 
 
 
