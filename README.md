@@ -97,6 +97,7 @@ Execution time is displayed at the end of the run, providing insight into proces
 
 ## **Acknowledgments**
 Built using:
+- [ANSYS Student Version](https://www.ansys.com/de-de/academic/students)
 - [VTK](https://vtk.org/)
 - [ParaView](https://www.paraview.org)
 
