@@ -98,6 +98,7 @@ Execution time is displayed at the end of the run, providing insight into proces
 ## **Acknowledgments**
 Built using:
 - [VTK](https://vtk.org/)
-- [NumPy](https://numpy.org/)
+- [ParaView](https://www.paraview.org)
+
 
 For feedback or contributions, feel free to create an issue or submit a pull request.
