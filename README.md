@@ -39,8 +39,6 @@ python mesh2vtk.py --inputfile INPUTFILE --outputfile OUTPUTFILE [options]
 ### **Options**
 | **Option**                | **Description**                                                                 |
 |---------------------------|---------------------------------------------------------------------------------|
-| `--inputfile INPUTFILE`   | Path to the ANSYS input file. (Required)                                        |
-| `--outputfile OUTPUTFILE` | Path to the output `.vtu` file. (Required)                                      |
 | `--ascii`                 | Output the `.vtu` file in ASCII format (default is binary).                     |
 | `--fem_node_string`       | Map FEM node IDs to the `.vtu` file.                                            |
 | `--fem_element_string`    | Map FEM element IDs to the `.vtu` file.                                         |
