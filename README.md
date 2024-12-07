@@ -4,7 +4,7 @@ A python tool that converts a (general purpose) Finite Element Model to a VTK mo
 Currently I will try to focus on converting ANSYS FE models and post-processing some results.
 
 
-But still the focus will be in the future to convert also:
+But still - as already started - the focus will be in the future to also convert:
 - Nastran (.bdf, .dat) / OptiStruct (.fem) containing `CQUAD4`,`CTRIA3`, `CHEXA`, `CPENTA` and `CTETRA (2nd order only)` elements
 - Abaqus 
 
