@@ -38,7 +38,7 @@ options:
 
 # Example of converted Finite Element Models to vtu
 
-A simple test Nastran FE model was converted to a `vtu` model. 
+A simple test model - here a Nastran FE model - was converted to a `vtu` model. 
 
 The figure below shows the original Nastran model showing the node and element IDs.
 
@@ -52,10 +52,6 @@ Converted Nastran FEM to vtu **with** FEM node and element string mapping (if `-
 
 ![vtu_with_fem_mapping](./figures/test_model_vtu_with_fem_entity_mapping.png "vtu with fem mapping")
 
-
-Shell thicknesses can also been visualized as shown in the OptiStruct converted vtu model below. If 3D elements are also present the thickness values are set to NaN.
-
-![element_thickness](./figures/element_thickness.png "vtu with fem mapping") 
 
 
 
