@@ -1,9 +1,12 @@
 # Overview (still in development 🚧)
 A python tool that converts a (general purpose) Finite Element Model to a VTK model for visualizing in ParaView.
 
-Supported FE models:
+Currently I will try to focus on converting ANSYS FE models and post-processing some results.
 
+
+But still the focus will be in the future to convert also:
 - Nastran (.bdf, .dat) / OptiStruct (.fem) containing `CQUAD4`,`CTRIA3`, `CHEXA`, `CPENTA` and `CTETRA (2nd order only)` elements
+- Abaqus 
 
 # Usage
 
