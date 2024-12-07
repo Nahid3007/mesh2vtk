@@ -29,5 +29,8 @@ Install the required libraries using:
 pip install vtk numpy
 
 
+## **Usage**
+```bash
+python mesh2vtk.py --inputfile INPUTFILE --outputfile OUTPUTFILE [options]
 
 
