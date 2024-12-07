@@ -2,6 +2,19 @@
 
 mesh2vtk: Converts an ANSYS Finite Element Model into a vtu file
 
+usage: mesh2vtk.py [-h] --inputfile INPUTFILE --outputfile OUTPUTFILE [--ascii] [--fem_node_string] [--fem_element_string]
+
+options:
+  -h, --help            show this help message and exit
+  --inputfile INPUTFILE
+                        Path to the input file.
+  --outputfile OUTPUTFILE
+                        Path to the output vtu file.
+  --ascii               Optional: Data mode of vtu file. BINARY set as default mode. If this argument is passed data
+                        mode will be set to ASCII.
+  --fem_node_string     Optional: Map FEM node id to vtu file.
+  --fem_element_string  Optional: Map FEM element id to vtu file.
+  
 '''
 
 import vtk
@@ -61,11 +74,13 @@ def parse_ansys_file(inputfile):
 
     temp = []
     elems_line_187 = []
+    elems_line_186 = []
+    elems_line_185 = []
     elem_type_list = []
     
     for line in lines:
         
-        # parse nodes
+        #**** parse nodes
         if line.strip().lower().startswith('nblock'):
             bNodes = True
         elif bNodes and not line.startswith('-1'):
@@ -84,7 +99,7 @@ def parse_ansys_file(inputfile):
 
             vtk_nid = vtk_nid + 1
     
-        # parse elements
+        #**** parse elements
         elif line.strip().lower().startswith('et,'): 
             etype_no = line.split(',')[2]
             elem_type_list.append(etype_no)
@@ -93,17 +108,53 @@ def parse_ansys_file(inputfile):
             bElems = True
 
         elif bElems and not line.startswith('-1'):
-            if line.strip().startswith('(') or line.strip().startswith('eblock'):
+            if line.strip().startswith('(') or line.strip().startswith('eblock') or line.strip().startswith('keyo'):
                 continue
             
-            if etype_no == '187': # 10 node solid element
+            if etype_no == '187': # 2n order tetra element (10 nodes)
                 elems_line_187.append(line)
+            
+            elif etype_no == '186': # 20 node solid element (hex)
+                elems_line_186.append(line)
                 
+            elif etype_no == '185': # 8 node solid element (hex)
+                elems_line_185.append(line)
+            
         else:
             bNodes = False
             bElems = False
     
+    if '185' in elem_type_list:
+        for i in range(len(elems_line_185)):
+                fem_eid = elems_line_185[i][91:99].strip()
 
+                elements[fem_eid] = Element(fem_eid, vtk_eid)
+
+                attached_nodes_1st_line = [nodes[str(int(elems_line_185[i][99:173][j:j+9]))].vtk_nid for j in range(0, len(elems_line_185[i][99:173]), 9)]
+                                
+                # for 4-node tet element
+                if len(set(attached_nodes_1st_line[4:])) == 1:
+                    attached_nodes_1st_line = attached_nodes_1st_line[0:3] + [attached_nodes_1st_line[5]] 
+                
+                elements[fem_eid].attached_nodes = attached_nodes_1st_line
+
+                vtk_eid = vtk_eid + 1
+
+    if '186' in elem_type_list:
+        for i in range(len(elems_line_186)):
+            if i % 2 == 0: 
+                fem_eid = elems_line_186[i][91:99].strip()
+
+                elements[fem_eid] = Element(fem_eid, vtk_eid)
+
+                attached_nodes_1st_line = [nodes[str(int(elems_line_186[i][99:173][j:j+9]))].vtk_nid for j in range(0, len(elems_line_186[i][99:173]), 9)]
+                attached_nodes_2nd_line = [nodes[str(int(elems_line_186[i+1][0:][j:j+9]))].vtk_nid for j in range(0, len(elems_line_186[i+1][0:]), 9)]
+                
+                # temp.append(attached_nodes_2nd_line)
+                elements[fem_eid].attached_nodes = attached_nodes_1st_line + attached_nodes_2nd_line
+
+                vtk_eid = vtk_eid + 1
+                
     if '187' in elem_type_list:
         for i in range(len(elems_line_187)):
             if i % 2 == 0: 
@@ -112,12 +163,14 @@ def parse_ansys_file(inputfile):
                 elements[fem_eid] = Element(fem_eid, vtk_eid)
 
                 attached_nodes_1st_line = [nodes[str(int(elems_line_187[i][99:173][j:j+9]))].vtk_nid for j in range(0, len(elems_line_187[i][99:173]), 9)]
-                attached_nodes_2nd_line = [nodes[str(int(elems_line_187[i+1][0:18][j:j+9]))].vtk_nid for j in range(0, len(elems_line_187[i+1][0:18]), 9)]
+                attached_nodes_2nd_line = [nodes[str(int(elems_line_187[i+1][0:][j:j+9]))].vtk_nid for j in range(0, len(elems_line_187[i+1][0:]), 9)]
                 
                 # temp.append(attached_nodes_2nd_line)
                 elements[fem_eid].attached_nodes = attached_nodes_1st_line + attached_nodes_2nd_line
 
                 vtk_eid = vtk_eid + 1
+                
+
 
     return nodes, elements, elem_type_list, temp
 
@@ -135,12 +188,13 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
     vtk_cells = vtk.vtkCellArray()
 
     vtk_cell_type = {
-        "line": 3,
         "quad": 9,
         "tria": 6,
+        "tetra4": 10,
         "hexa": 12,
         "wedge": 13,
         "tetra10": 24,
+        "hexa20": 25,
     }
 
     vtk_cell_type_no = []
@@ -162,21 +216,21 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
             vtk_cells.InsertNextCell(tria)
             vtk_cell_type_no.append(vtk_cell_type["tria"])
 
+        # Tetra elements
+        elif len(elements[eid].attached_nodes) == 4 and '185' in elem_type_list:
+            tetra4 = vtk.vtkTetra()
+            for i in range(len(elements[eid].attached_nodes)):
+                tetra4.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
+            vtk_cells.InsertNextCell(tetra4)
+            vtk_cell_type_no.append(vtk_cell_type["tetra4"])
+
         # Hexa elements
-        elif len(elements[eid].attached_nodes) == 8 and 'CHEXA' in elem_type_list:
+        elif len(elements[eid].attached_nodes) == 8 and '185' in elem_type_list:
             hexa = vtk.vtkHexahedron()
             for i in range(len(elements[eid].attached_nodes)):
                 hexa.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
             vtk_cells.InsertNextCell(hexa)
             vtk_cell_type_no.append(vtk_cell_type["hexa"])
-
-        # Penta elements
-        elif len(elements[eid].attached_nodes) == 6 and 'CPENTA' in elem_type_list:
-            wedge = vtk.vtkWedge()
-            for i in range(len(elements[eid].attached_nodes)):
-                wedge.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
-            vtk_cells.InsertNextCell(wedge)
-            vtk_cell_type_no.append(vtk_cell_type["wedge"])
 
         # Tetrahedra (2nd order) elements
         elif len(elements[eid].attached_nodes) == 10 and '187' in elem_type_list:
@@ -185,14 +239,22 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
                 tetra10.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
             vtk_cells.InsertNextCell(tetra10)
             vtk_cell_type_no.append(vtk_cell_type["tetra10"])
-            
-        # Bar/Beam elements
-        elif len(elements[eid].attached_nodes) == 2 and 'CBAR' in elem_type_list:
-            line = vtk.vtkLine()
+ 
+       # Hexahedra (2nd order) elements
+        elif len(elements[eid].attached_nodes) == 20 and '186' in elem_type_list:
+            hexa20 = vtk.vtkQuadraticHexahedron()
             for i in range(len(elements[eid].attached_nodes)):
-                line.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
-            vtk_cells.InsertNextCell(line)
-            vtk_cell_type_no.append(vtk_cell_type["line"])
+                hexa20.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
+            vtk_cells.InsertNextCell(hexa20)
+            vtk_cell_type_no.append(vtk_cell_type["hexa20"]) 
+
+        # Penta elements
+        elif len(elements[eid].attached_nodes) == 6 and 'CPENTA' in elem_type_list:
+            wedge = vtk.vtkWedge()
+            for i in range(len(elements[eid].attached_nodes)):
+                wedge.GetPointIds().SetId(i, elements[eid].attached_nodes[i])
+            vtk_cells.InsertNextCell(wedge)
+            vtk_cell_type_no.append(vtk_cell_type["wedge"])
 
     # Create unstructured grid
     ugrid = vtk.vtkUnstructuredGrid()
@@ -239,6 +301,16 @@ def write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_no
 
 if __name__ == '__main__':
 
+    print(f'')
+    print(f'==================================================')
+    print(f'                     _     ____        _   _      ')
+    print(f' _ __ ___   ___  ___| |__ |___ \__   _| |_| | __  ')
+    print(f"| '_  _ \ / _ \/ __| '_ \  __) \ \ / / __| |/ /  ")
+    print(f'| | | | | |  __/\__ \ | | |/ __/ \ V /| |_|   <   ')
+    print(f'|_| |_| |_|\___||___/_| |_|_____| \_/  \__|_|\_\  ')
+    print(f'')
+    print(f'==================================================')
+
     args = ParseArgs()
 
     inputfile = args.inputfile
@@ -248,22 +320,30 @@ if __name__ == '__main__':
     fem_element_string = args.fem_element_string
 
     print(f'')
+    
+    print(f'Binary vtu file data mode: {not dataModeASCII} ')    
+    print(f'Parsing input file: {inputfile}')
+    
+    print(f'') 
+    
 
     start_time = time.time()
 
     nodes, elements, elem_type_list, temp = parse_ansys_file(inputfile)
 
+    
     #for nid in nodes.keys():
     #    print(nodes[nid].nid, nodes[nid].vtk_nid, nodes[nid].coordinates)
 
     #for eid in elements.keys():
-    #    print(elements[eid].eid, elements[eid].vtk_eid, elements[eid].attached_nodes)
+    #    print(elements[eid].vtk_eid, elements[eid].attached_nodes)
 
     # print(temp)
-
+    print(f'Write vtu file ...')
     write_vtk(nodes, elements, elem_type_list, outputfile, dataModeASCII, fem_node_string, fem_element_string)
 
     end_time = time.time()
 
     print(f'')
-    print(f'Done. Elapsed time: {(end_time - start_time):.3f} seconds')
+    print(f'Elapsed time: {(end_time - start_time):.3f} seconds')
+    print(f'Done.')
