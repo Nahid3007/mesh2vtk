@@ -1,6 +1,6 @@
-# **mesh2vtk: ANSYS FEM to VTK Converter (still in development 🚧)**
+# **mesh2vtk: FEM to VTK Converter (still in development 🚧)**
 
-`mesh2vtk` is a Python script that converts ANSYS Finite Element Model (FEM) files into VTK Unstructured Grid (`.vtu`) files. This tool is designed for visualizing and analyzing FEM data in tools like ParaView.
+`mesh2vtk` is a Python script that converts (currently) ANSYS Finite Element Model files into VTK Unstructured Grid (`.vtu`) files. This tool is designed for visualizing and analyzing FEM data in tools like ParaView.
 
 ---
 
