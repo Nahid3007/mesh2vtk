@@ -1,14 +1,14 @@
 
 # **mesh2vtk: FEM to VTK Converter** (still in development 🚧)
 
-`mesh2vtk` is a Python script that converts (currently focused) ANSYS Finite Element Model files into VTK Unstructured Grid (`.vtu`) files. This tool is designed for visualizing and analyzing FEM data in tools like ParaView.
+`mesh2vtk` is a Python script that converts ANSYS Finite Element Model files (currently focused) into VTK Unstructured Grid (`.vtu`) files. This tool is designed for visualizing and analyzing FEM data in tools like ParaView.
 
 ---
 
 ## **Features**
 - Converts FEM nodes and elements to VTK-compatible formats.
 - Maps FEM node and element IDs to the `.vtu` file (optional).
-- Outputs in binary or ASCII format.
+- `.vtu` outputs in binary or ASCII format.
 
 ---
 
@@ -58,27 +58,37 @@ This command:
 
 ## **Supported Element Types**
 
-- Supports the following ANSYS (most used) element types:
+- Supports the following ANSYS element types:
 
 
 | **Element Type**             | **Nodes** | **VTK Cell Type**        |
 |-------------------------------|-----------|--------------------------|
-| 10-node tetrahedron (ET,187) | 10        | Quadratic tetrahedron    |
-| 20-node hexahedron (ET,186)  | 20        | Quadratic hexahedron     |
-| 8-node hexahedron (ET,185)  | 8        | Linear hexahedron     |
-
-to be edited ...
+| Solid 187 | 10        | Quadtratic Tetra (=24)    |
+| Solid 186  | 20        | Quadratic Hexahedron (=25)     |
+| Solid 185  | 8        | Hexahedron (=12)     |
+| Solid 185  | 4        | Tetra (=10)     |
+| Shell 181  | 4        | Quad (=9)     |
+| Shell 181  | 3        | Triangle (=5)     |
 
 ---
 
 ## **Output Details**
 
-- The `.vtu` file contains:
-  - **Points**: Node coordinates.
-  - **Cells**: FEM elements mapped to VTK cell types.
+- The `.vtu` file contains (example):
+  - **Points**
+![paraview point info](./ANSYS/03_figures/paraview_point.png "paraview point info") 
+  - **Cells**:. 
+![paraview cell info](./ANSYS/03_figures/paraview_cell.png "paraview cell info") 
+
   - **Attributes** (optional):
     - FEM node IDs (`FEM_NODE_ID`).
     - FEM element IDs (`FEM_ELEMENT_ID`).
+
+    Without FEM node and element string mapping:
+    ![paraview no fem string mapping](./ANSYS/03_figures/no_fem_string_mapping.png "no fem string mapping")
+
+    With FEM node and element string mapping:
+    ![paraview fem string mapping](./ANSYS/03_figures/with_fem_string_mapping.png "with fem string mapping") 
 
 ---
 
@@ -87,6 +97,10 @@ to be edited ...
 The script outputs key statistics about the generated `.vtu` file, including:
 - Number of points (nodes).
 - Number of cells (elements).
+- Output file directory and file name
+
+![vtk summary](./ANSYS/03_figures/vtk_summary.png "vtk summary") 
+
 
 ---
 
