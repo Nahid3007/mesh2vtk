@@ -76,9 +76,11 @@ This command:
 
 - The `.vtu` file contains (example):
   - **Points**
-![paraview point info](./ANSYS/03_figures/paraview_point.png "paraview point info") 
-  - **Cells**:. 
-![paraview cell info](./ANSYS/03_figures/paraview_cell.png "paraview cell info") 
+  
+  ![paraview point info](./ANSYS/03_figures/paraview_point.png "paraview point info") 
+  - **Cells**:
+  
+  ![paraview cell info](./ANSYS/03_figures/paraview_cell.png "paraview cell info") 
 
   - **Attributes** (optional):
     - FEM node IDs (`FEM_NODE_ID`).
