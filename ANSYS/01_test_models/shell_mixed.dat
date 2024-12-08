@@ -1,0 +1,475 @@
+/batch
+/config,noeldb,1     ! force off writing results to database
+*get,_wallstrt,active,,time,wall
+! ANSYS input file written by Workbench version 2024 R2
+! File used for geometry attach: C:\Users\nahid\Documents\beam_files\dp0\SYS-6\DM\SYS-6.scdoc
+/title,beam--Static Structural (E5)
+! ****** Begin Custom Load Command Snippet ******
+/COM, ACT Extensions:
+/COM,     LSDYNA, 2024.2
+/COM,     5f463412-bd3e-484b-87e7-cbc0a665e474, wbex
+/COM,/COM,     ANSYSMotion, 2024.2
+/COM,     20180725-3f81-49eb-9f31-41364844c769, wbex
+/COM,
+! ****** End   Custom Load Command Snippet ******
+*DIM,_wb_ProjectScratch_dir,string,248
+_wb_ProjectScratch_dir(1) = 'C:\Users\nahid\Documents\_ProjectScratch\Scr9D13\'
+*DIM,_wb_SolverFiles_dir,string,248
+_wb_SolverFiles_dir(1) = 'C:\Users\nahid\Documents\beam_files\dp0\SYS-6\MECH\'
+*DIM,_wb_userfiles_dir,string,248
+_wb_userfiles_dir(1) = 'C:\Users\nahid\Documents\beam_files\user_files\'
+/com,--- Data in consistent NMM units. See Solving Units in the help system for more information.
+/units,MPA
+/nopr
+/wb,file,start              !  signify a WB generated input file
+/prep7
+! Turn off shape checking because checks already performed inside WB mesher.
+! See help system for more information.
+SHPP,OFF,,NOWARN
+/nolist
+etcon,set             ! allow ANSYS to choose best KEYOP's for 180x elements, resets any applicable keyopt to MAPDL defaults
+/com,*********** Nodes for the whole assembly ***********
+nblock,3,,123
+(1i9,3e20.9e3)
+        1     5.000000000E+02     0.000000000E+00     0.000000000E+00
+        2     4.782608696E+02     0.000000000E+00     0.000000000E+00
+        3     4.565217391E+02     0.000000000E+00     0.000000000E+00
+        4     4.347826087E+02     0.000000000E+00     0.000000000E+00
+        5     4.130434783E+02     0.000000000E+00     0.000000000E+00
+        6     3.913043478E+02     0.000000000E+00     0.000000000E+00
+        7     3.695652174E+02     0.000000000E+00     0.000000000E+00
+        8     3.478260870E+02     0.000000000E+00     0.000000000E+00
+        9     3.260869565E+02     0.000000000E+00     0.000000000E+00
+       10     3.043478261E+02     0.000000000E+00     0.000000000E+00
+       11     2.826086957E+02     0.000000000E+00     0.000000000E+00
+       12     2.608695652E+02     0.000000000E+00     0.000000000E+00
+       13     2.391304348E+02     0.000000000E+00     0.000000000E+00
+       14     2.173913043E+02     0.000000000E+00     0.000000000E+00
+       15     1.956521739E+02     0.000000000E+00     0.000000000E+00
+       16     1.739130435E+02     0.000000000E+00     0.000000000E+00
+       17     1.521739130E+02     0.000000000E+00     0.000000000E+00
+       18     1.304347826E+02     0.000000000E+00     0.000000000E+00
+       19     1.086956522E+02     0.000000000E+00     0.000000000E+00
+       20     8.695652174E+01     0.000000000E+00     0.000000000E+00
+       21     6.521739130E+01     0.000000000E+00     0.000000000E+00
+       22     4.347826087E+01     0.000000000E+00     0.000000000E+00
+       23     2.173913043E+01     0.000000000E+00     0.000000000E+00
+       24     0.000000000E+00     0.000000000E+00     0.000000000E+00
+       25     5.000000000E+02     0.000000000E+00     1.000000000E+02
+       26     0.000000000E+00     0.000000000E+00     1.000000000E+02
+       27     2.500000000E+01     0.000000000E+00     1.000000000E+02
+       28     5.000000000E+01     0.000000000E+00     1.000000000E+02
+       29     7.500000000E+01     0.000000000E+00     1.000000000E+02
+       30     1.000000000E+02     0.000000000E+00     1.000000000E+02
+       31     1.250000000E+02     0.000000000E+00     1.000000000E+02
+       32     1.500000000E+02     0.000000000E+00     1.000000000E+02
+       33     1.750000000E+02     0.000000000E+00     1.000000000E+02
+       34     2.000000000E+02     0.000000000E+00     1.000000000E+02
+       35     2.250000000E+02     0.000000000E+00     1.000000000E+02
+       36     2.500000000E+02     0.000000000E+00     1.000000000E+02
+       37     2.750000000E+02     0.000000000E+00     1.000000000E+02
+       38     3.000000000E+02     0.000000000E+00     1.000000000E+02
+       39     3.250000000E+02     0.000000000E+00     1.000000000E+02
+       40     3.500000000E+02     0.000000000E+00     1.000000000E+02
+       41     3.750000000E+02     0.000000000E+00     1.000000000E+02
+       42     4.000000000E+02     0.000000000E+00     1.000000000E+02
+       43     4.250000000E+02     0.000000000E+00     1.000000000E+02
+       44     4.500000000E+02     0.000000000E+00     1.000000000E+02
+       45     4.750000000E+02     0.000000000E+00     1.000000000E+02
+       46     5.000000000E+02     0.000000000E+00     2.500000000E+01
+       47     5.000000000E+02     0.000000000E+00     5.000000000E+01
+       48     5.000000000E+02     0.000000000E+00     7.500000000E+01
+       49     0.000000000E+00     0.000000000E+00     2.500000000E+01
+       50     0.000000000E+00     0.000000000E+00     5.000000000E+01
+       51     0.000000000E+00     0.000000000E+00     7.500000000E+01
+       52     1.717872648E+02     0.000000000E+00     4.890207540E+01
+       53     2.202991056E+02     0.000000000E+00     5.023396670E+01
+       54     2.439006589E+02     0.000000000E+00     5.034309463E+01
+       55     2.673390826E+02     0.000000000E+00     5.037121840E+01
+       56     2.906571235E+02     0.000000000E+00     5.032225024E+01
+       57     3.138242006E+02     0.000000000E+00     5.007296147E+01
+       58     3.365776077E+02     0.000000000E+00     4.921909640E+01
+       59     3.572713774E+02     0.000000000E+00     4.662590086E+01
+       60     1.451249956E+02     0.000000000E+00     4.541520006E+01
+       61     3.776288809E+02     0.000000000E+00     4.543797334E+01
+       62     1.190108307E+02     0.000000000E+00     4.880533951E+01
+       63     4.016585649E+02     0.000000000E+00     4.432656351E+01
+       64     9.457322806E+01     0.000000000E+00     4.980904852E+01
+       65     4.274179805E+02     0.000000000E+00     4.848367491E+01
+       66     4.519493057E+02     0.000000000E+00     4.970460608E+01
+       67     4.705108887E+01     0.000000000E+00     5.022818745E+01
+       68     4.760563093E+02     0.000000000E+00     5.004600202E+01
+       69     4.753060975E+02     0.000000000E+00     7.500426179E+01
+       70     4.504618153E+02     0.000000000E+00     7.473120351E+01
+       71     4.252418793E+02     0.000000000E+00     7.388890006E+01
+       72     3.994024422E+02     0.000000000E+00     7.233100805E+01
+       73     3.714625151E+02     0.000000000E+00     6.989046331E+01
+       74     3.447740235E+02     0.000000000E+00     7.393574268E+01
+       75     3.198865696E+02     0.000000000E+00     7.493233508E+01
+       76     2.954702116E+02     0.000000000E+00     7.519207689E+01
+       77     2.711568073E+02     0.000000000E+00     7.525970962E+01
+       78     2.468483420E+02     0.000000000E+00     7.524307534E+01
+       79     2.224368933E+02     0.000000000E+00     7.515418988E+01
+       80     1.978034105E+02     0.000000000E+00     7.489588659E+01
+       81     1.728037386E+02     0.000000000E+00     7.421573915E+01
+       82     1.476182660E+02     0.000000000E+00     7.331371602E+01
+       83     1.225233202E+02     0.000000000E+00     7.417473952E+01
+       84     9.762946811E+01     0.000000000E+00     7.482266605E+01
+       85     7.303263962E+01     0.000000000E+00     7.508217637E+01
+       86     4.861628162E+01     0.000000000E+00     7.515976323E+01
+       87     2.428715143E+01     0.000000000E+00     7.514183036E+01
+       88     2.350818040E+01     0.000000000E+00     5.019099889E+01
+       89     2.265024709E+01     0.000000000E+00     2.515581354E+01
+       90     4.531280223E+01     0.000000000E+00     2.518181226E+01
+       91     6.799107225E+01     0.000000000E+00     2.513055772E+01
+       92     9.067312128E+01     0.000000000E+00     2.493552848E+01
+       93     1.130716871E+02     0.000000000E+00     2.435262018E+01
+       94     1.335793561E+02     0.000000000E+00     2.245282349E+01
+       95     1.527781053E+02     0.000000000E+00     2.237706965E+01
+       96     1.736288648E+02     0.000000000E+00     2.435281407E+01
+       97     1.961184288E+02     0.000000000E+00     2.497206953E+01
+       98     2.414119131E+02     0.000000000E+00     2.525572856E+01
+       99     2.639745609E+02     0.000000000E+00     2.526969375E+01
+      100     2.864226434E+02     0.000000000E+00     2.523330140E+01
+      101     3.086827006E+02     0.000000000E+00     2.506569267E+01
+      102     3.305613849E+02     0.000000000E+00     2.453090873E+01
+      103     3.729917477E+02     0.000000000E+00     2.277914120E+01
+      104     3.928359605E+02     0.000000000E+00     2.151822012E+01
+      105     4.116387762E+02     0.000000000E+00     2.195270755E+01
+      106     4.320386875E+02     0.000000000E+00     2.415515419E+01
+      107     4.544334115E+02     0.000000000E+00     2.485703150E+01
+      108     4.771783044E+02     0.000000000E+00     2.507102045E+01
+      109     7.070911446E+01     0.000000000E+00     5.013435168E+01
+      110     3.519713236E+02     0.000000000E+00     2.347384494E+01
+      111     1.964390092E+02     0.000000000E+00     4.990311616E+01
+      112     2.187993995E+02     0.000000000E+00     2.518451195E+01
+-1
+/wb,elem,start            !  set before creation of elements
+/com,*********** Elements for Body 1 'SYS-6\Surface' ***********
+et,1,181
+keyo,1,1,0          ! bending and membrane stiffness
+keyo,1,3,2
+eblock,19,solid,,87
+(19i9)
+        1        1        1        1        0        0        0        0        4        0        1       61       59       73       73
+        1        1        1        1        0        0        0        0        4        0        2       63      105      104      104
+        1        1        1        1        0        0        0        0        4        0        3       94       60       95       95
+        1        1        1        1        0        0        0        0        4        0        4       74       73       59       58
+        1        1        1        1        0        0        0        0        4        0        5       58       57       75       74
+        1        1        1        1        0        0        0        0        4        0        6       57       56       76       75
+        1        1        1        1        0        0        0        0        4        0        7       56       55       77       76
+        1        1        1        1        0        0        0        0        4        0        8       55       54       78       77
+        1        1        1        1        0        0        0        0        4        0        9       54       53       79       78
+        1        1        1        1        0        0        0        0        4        0       10       53      111       80       79
+        1        1        1        1        0        0        0        0        4        0       11       60       52       96       95
+        1        1        1        1        0        0        0        0        4        0       12       60       82       81       52
+        1        1        1        1        0        0        0        0        4        0       13       52       81       80      111
+        1        1        1        1        0        0        0        0        4        0       14       53      112       97      111
+        1        1        1        1        0        0        0        0        4        0       15      111       97       96       52
+        1        1        1        1        0        0        0        0        4        0       16       55       99       98       54
+        1        1        1        1        0        0        0        0        4        0       17       54       98      112       53
+        1        1        1        1        0        0        0        0        4        0       18       57      101      100       56
+        1        1        1        1        0        0        0        0        4        0       19       56      100       99       55
+        1        1        1        1        0        0        0        0        4        0       20       59      110      102       58
+        1        1        1        1        0        0        0        0        4        0       21       58      102      101       57
+        1        1        1        1        0        0        0        0        4        0       22       61      103      110       59
+        1        1        1        1        0        0        0        0        4        0       23       60       62       83       82
+        1        1        1        1        0        0        0        0        4        0       24       60       94       93       62
+        1        1        1        1        0        0        0        0        4        0       25       62       64       84       83
+        1        1        1        1        0        0        0        0        4        0       26       61       73       72       63
+        1        1        1        1        0        0        0        0        4        0       27       62       93       92       64
+        1        1        1        1        0        0        0        0        4        0       28       63       65      106      105
+        1        1        1        1        0        0        0        0        4        0       29       63       72       71       65
+        1        1        1        1        0        0        0        0        4        0       30       64      109       85       84
+        1        1        1        1        0        0        0        0        4        0       31       64       92       91      109
+        1        1        1        1        0        0        0        0        4        0       32       65       66      107      106
+        1        1        1        1        0        0        0        0        4        0       33       65       71       70       66
+        1        1        1        1        0        0        0        0        4        0       34      109       67       86       85
+        1        1        1        1        0        0        0        0        4        0       35      109       91       90       67
+        1        1        1        1        0        0        0        0        4        0       36       66       68      108      107
+        1        1        1        1        0        0        0        0        4        0       37       70       69       68       66
+        1        1        1        1        0        0        0        0        4        0       38       67       88       87       86
+        1        1        1        1        0        0        0        0        4        0       39       90       89       88       67
+        1        1        1        1        0        0        0        0        4        0       40       68       47       46      108
+        1        1        1        1        0        0        0        0        4        0       41       69       48       47       68
+        1        1        1        1        0        0        0        0        4        0       42       69       45       25       48
+        1        1        1        1        0        0        0        0        4        0       43       70       44       45       69
+        1        1        1        1        0        0        0        0        4        0       44       71       43       44       70
+        1        1        1        1        0        0        0        0        4        0       45       72       42       43       71
+        1        1        1        1        0        0        0        0        4        0       46       73       41       42       72
+        1        1        1        1        0        0        0        0        4        0       47       74       40       41       73
+        1        1        1        1        0        0        0        0        4        0       48       75       39       40       74
+        1        1        1        1        0        0        0        0        4        0       49       76       38       39       75
+        1        1        1        1        0        0        0        0        4        0       50       77       37       38       76
+        1        1        1        1        0        0        0        0        4        0       51       78       36       37       77
+        1        1        1        1        0        0        0        0        4        0       52       79       35       36       78
+        1        1        1        1        0        0        0        0        4        0       53       80       34       35       79
+        1        1        1        1        0        0        0        0        4        0       54       81       33       34       80
+        1        1        1        1        0        0        0        0        4        0       55       82       32       33       81
+        1        1        1        1        0        0        0        0        4        0       56       83       31       32       82
+        1        1        1        1        0        0        0        0        4        0       57       84       30       31       83
+        1        1        1        1        0        0        0        0        4        0       58       85       29       30       84
+        1        1        1        1        0        0        0        0        4        0       59       86       28       29       85
+        1        1        1        1        0        0        0        0        4        0       60       87       27       28       86
+        1        1        1        1        0        0        0        0        4        0       61       87       51       26       27
+        1        1        1        1        0        0        0        0        4        0       62       88       50       51       87
+        1        1        1        1        0        0        0        0        4        0       63       89       49       50       88
+        1        1        1        1        0        0        0        0        4        0       64       89       23       24       49
+        1        1        1        1        0        0        0        0        4        0       65       90       22       23       89
+        1        1        1        1        0        0        0        0        4        0       66       91       21       22       90
+        1        1        1        1        0        0        0        0        4        0       67       92       20       21       91
+        1        1        1        1        0        0        0        0        4        0       68       93       19       20       92
+        1        1        1        1        0        0        0        0        4        0       69       94       18       19       93
+        1        1        1        1        0        0        0        0        4        0       70       95       17       18       94
+        1        1        1        1        0        0        0        0        4        0       71       96       16       17       95
+        1        1        1        1        0        0        0        0        4        0       72       97       15       16       96
+        1        1        1        1        0        0        0        0        4        0       73      112       14       15       97
+        1        1        1        1        0        0        0        0        4        0       74       98       13       14      112
+        1        1        1        1        0        0        0        0        4        0       75       99       12       13       98
+        1        1        1        1        0        0        0        0        4        0       76      100       11       12       99
+        1        1        1        1        0        0        0        0        4        0       77      101       10       11      100
+        1        1        1        1        0        0        0        0        4        0       78      102        9       10      101
+        1        1        1        1        0        0        0        0        4        0       79      110        8        9      102
+        1        1        1        1        0        0        0        0        4        0       80      103        7        8      110
+        1        1        1        1        0        0        0        0        4        0       81      104        6        7      103
+        1        1        1        1        0        0        0        0        4        0       82      105        5        6      104
+        1        1        1        1        0        0        0        0        4        0       83      106        4        5      105
+        1        1        1        1        0        0        0        0        4        0       84      107        3        4      106
+        1        1        1        1        0        0        0        0        4        0       85      108        2        3      107
+        1        1        1        1        0        0        0        0        4        0       86       46        1        2      108
+        1        1        1        1        0        0        0        0        4        0       87       63      104      103       61
+-1
+! Material Id = {A046EC76-243F-44B7-9EE2-84CD7386AFA7}
+/wb,elem,end               !  done creating elements
+/com,*********** Send User Defined Coordinate System(s) ***********
+csys,0
+toffst,273.15,      ! Temperature offset from absolute zero
+/com,*********** Set Reference Temperature ***********
+tref,22.
+/wb,mat,start              !  starting to send materials
+/com,*********** Send Materials ***********
+Temperature = 'TEMP' ! Temperature
+MP,DENS,1,7.85e-09,	! tonne mm^-3
+MP,ALPX,1,1.2e-05,	! C^-1
+MP,C,1,434000000,	! mm^2 s^-2 C^-1
+MP,KXX,1,60.5,	! tonne mm s^-3 C^-1
+MP,RSVX,1,0.00017,	! ohm mm
+MP,EX,1,200000,	! tonne s^-2 mm^-1
+MP,NUXY,1,0.3,
+MP,MURX,1,10000,
+MP,UVID,1,51eb8610-4b8b-47d3-80a5-57c8141934d9
+MP,UMID,1,59002a79-71c2-428e-906b-55d7dbee100e
+
+/wb,mat,end                !  done sending materials
+/com,*********** Send Sheet Properties ***********
+sectype,1,shell
+secdata,10.
+secoff,mid
+
+!************************* Model Summary ********************
+!SYS-6\Surface,	Structural Steel,	matid,	1
+!************************* End Model Summary ********************
+! get the diagonal of the bounding box. Needed later for other things
+*get,_xmin,node,,mnloc,x
+*get,_ymin,node,,mnloc,y
+*get,_zmin,node,,mnloc,z
+*get,_xmax,node,,mxloc,x
+*get,_ymax,node,,mxloc,y
+*get,_zmax,node,,mxloc,z
+_ASMDIAG=(_xmax-_xmin)*(_xmax-_xmin)+(_ymax-_ymin)*(_ymax-_ymin)+(_zmax-_zmin)*(_zmax-_zmin)
+_ASMDIAG=SQRT(_ASMDIAG)
+/wb,contact,start          !  starting to send contact
+/wb,contact,end            !  done creating contacts
+/com,*********** Send Named Selection as Node Component ***********
+CMBLOCK,L_FIX   ,NODE,        5
+(8i10)
+        24        26        49        50        51
+/com,*********** Send Named Selection as Node Component ***********
+CMBLOCK,L_LOAD  ,NODE,        5
+(8i10)
+         1        25        46        47        48
+/golist
+/wb,load,start             !  starting to send loads
+/com,*********** Fixed Supports ***********
+CMBLOCK,_FIXEDSU,NODE,        5
+(8i10)
+        24        26        49        50        51
+cmsel,s,_FIXEDSU
+d,all,all
+nsel,all
+/com,*********** Define Force Without Surface Effect Elements "Force" ***********
+local,12,0,0.,0.,0.,0.,0.,0.
+csys,0
+CMBLOCK,_CM44_3 ,ELEM,        1
+(8i10)
+        86
+CMBLOCK,_CM44_4 ,ELEM,        2
+(8i10)
+        40        41
+CMBLOCK,_CM44_5 ,ELEM,        1
+(8i10)
+        42
+
+*DIM,_loadvari44x,TABLE,3,1,1,TIME, , , 0
+! Time values
+*TAXIS,_loadvari44x(1),1,0.,1.,2.
+! Load values
+_loadvari44x(1,1,1) = 0.
+_loadvari44x(2,1,1) = 100.
+_loadvari44x(3,1,1) = 0.
+
+
+
+*DIM,_loadvari44y,TABLE,3,1,1,TIME, , , 0
+! Time values
+*TAXIS,_loadvari44y(1),1,0.,1.,2.
+! Load values
+_loadvari44y(1,1,1) = 0.
+_loadvari44y(2,1,1) = 0.
+_loadvari44y(3,1,1) = -1.
+
+
+
+*DIM,_loadvari44z,TABLE,3,1,1,TIME, , , 0
+! Time values
+*TAXIS,_loadvari44z(1),1,0.,1.,2.
+! Load values
+_loadvari44z(1,1,1) = 0.
+_loadvari44z(2,1,1) = 0.
+_loadvari44z(3,1,1) = 0.
+
+
+/gst,on,on
+fini
+*get,_numnode,node,0,count
+*get,_numelem,elem,0,count
+*get, _MAXELEMNUM, elem, 0, NUM, MAX
+*get, _MAXNODENUM, node, 0, NUM, MAX
+*get, _MAXELEMTYPE, etyp, 0, NUM, MAX
+*get, _MAXREALCONST, rcon, 0, NUM, MAX
+/go
+/wb,load,end               !  done creating loads
+/com,--- Number of total nodes = %_numnode%
+/com,--- Number of contact elements = 0
+/com,--- Number of spring elements = 0
+/com,--- Number of bearing elements = 0
+/com,--- Number of solid elements = 87
+/com,--- Number of condensed parts = 0
+/com,--- Number of total elements = %_numelem%
+*get,_wallbsol,active,,time,wall
+/com,****************************************************************************
+/com,*************************    SOLUTION       ********************************
+/com,****************************************************************************
+/solu
+antype,0                   ! static analysis
+_thickRatio=  0     ! Ratio of thick parts in the model
+eqsl,sparse,,,,,1
+cntr,print,1               ! print out contact info and also make no initial contact an error
+cncheck,dmp		!	Enable program controlled contact splitting for distributed memory parallel run
+dmpoption,emat,no             ! Don't combine emat file for DANSYS
+dmpoption,esav,no             ! Don't combine esav file for DANSYS
+nldiag,cont,iter           ! print out contact info each equilibrium iteration
+rescontrol,,none                 ! Do not keep any restart files
+/com,****************************************************
+/com,******************* SOLVE FOR LS 1 OF 2 ****************
+/com,*********** Set Force Without Surface Effect Elements "Force" ***********
+sfco,1,0,12,,,,,1   ! set and send X component tables
+sfe,_CM44_3,3,pres,1,%_loadvari44x%
+sfe,_CM44_4,4,pres,1,%_loadvari44x%
+sfe,_CM44_5,5,pres,1,%_loadvari44x%
+sfco,1,1,12,,,,,1   ! set and send Y component tables
+sfe,_CM44_3,3,pres,1,%_loadvari44y%
+sfe,_CM44_4,4,pres,1,%_loadvari44y%
+sfe,_CM44_5,5,pres,1,%_loadvari44y%
+sfco,1,2,12,,,,,1   ! set and send Z component tables
+sfe,_CM44_3,3,pres,1,%_loadvari44z%
+sfe,_CM44_4,4,pres,1,%_loadvari44z%
+sfe,_CM44_5,5,pres,1,%_loadvari44z%
+nsel,all
+esel,all
+sfco,none		! resets the sfcontrol
+/nopr
+/gopr
+autots,on                   ! User turned on automatic time stepping
+nsub,1,10,1,OFF
+time,1.
+outres,erase
+outres,all,none
+outres,nsol,all,
+outres,rsol,all
+outres,eangl,all
+outres,etmp,all
+outres,veng,all
+outres,strs,all,
+outres,epel,all,
+outres,eppl,all,
+outres,cont,all,
+! *********** WB SOLVE COMMAND ***********
+! check interactive state
+*get,ANSINTER_,active,,int
+*if,ANSINTER_,ne,0,then
+/eof
+*endif
+solve
+/com *************** Write FE CONNECTORS ********* 
+CEWRITE,file,ce,,INTE
+/com,****************************************************
+/com,*************** FINISHED SOLVE FOR LS 1 *************
+/com,****************************************************
+/com,******************* SOLVE FOR LS 2 OF 2 ****************
+/nopr
+/gopr
+nsub,1,1,1
+time,2.
+outres,erase
+outres,all,none
+outres,nsol,all,
+outres,rsol,all
+outres,eangl,all
+outres,etmp,all
+outres,veng,all
+outres,strs,all,
+outres,epel,all,
+outres,eppl,all,
+outres,cont,all,
+solve
+/com,****************************************************
+/com,*************** FINISHED SOLVE FOR LS 2 *************
+save,file,db
+*get,_wallasol,active,,time,wall
+/nopr
+*get,_numnode,node,0,count
+*get,_numelem,elem,0,count
+*get, _MAXELEMNUM, elem, 0, NUM, MAX
+*get, _MAXNODENUM, node, 0, NUM, MAX,,,INTERNAL
+*get, _MAXELEMTYPE, etyp, 0, NUM, MAX
+*get, _MAXREALCONST, rcon, 0, NUM, MAX
+*get,_NSOLTHREADS,active,0,ntfs
+*get,_NSOLPROCESSES,active,0,npfs
+/gopr
+/post1
+xmlo,ENCODING,ISO-8859-1
+xmlo,parm
+/xml,parm,xml
+fini
+/gopr
+*get,_walldone,active,,time,wall
+_preptime=(_wallbsol-_wallstrt)*3600
+_solvtime=(_wallasol-_wallbsol)*3600
+_posttime=(_walldone-_wallasol)*3600
+_totaltim=(_walldone-_wallstrt)*3600
+*get,_dlbratio,active,0,solu,dlbr
+*get,_combtime,active,0,solu,comb
+*get,_ssmode,active,0,solu,ssmm
+*get,_ndofs,active,0,solu,ndof
+*get,_sol_end_time,active,0,set,time
+*if,_sol_end_time,eq,2.000000,then
+/fclean				!clean distributed files
+*endif
+/com,--- Total number of nodes = %_numnode%
+/com,--- Total number of elements = %_numelem%
+/com,--- Element load balance ratio = %_dlbratio%
+/com,--- Time to combine distributed files = %_combtime%
+/com,--- Sparse memory mode = %_ssmode%
+/com,--- Number of DOF = %_ndofs%
+/wb,file,end               ! done with WB generated input
